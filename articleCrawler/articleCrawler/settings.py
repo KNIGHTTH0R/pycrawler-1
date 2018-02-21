@@ -68,7 +68,9 @@ import os
 # 每个item会流经 every pipeline below:
 ITEM_PIPELINES = {
     'articleCrawler.pipelines.JsonExporterPipeline': 300,  # the processing order, the smaller, the more prior
-    'articleCrawler.pipelines.ArticleImagePipeline': 200,
+    # 'scrapy.pipelines.images.ImagesPipeline': 100,
+    # 'articleCrawler.pipelines.MySQLPipeline': 200,
+    'articleCrawler.pipelines.MysqlTwistedPipeline': 200
 }
 IMAGES_URLS_FIELD = "front_image_url"  # a url list field
 project_dir = os.path.abspath(os.path.dirname(__file__))
@@ -97,3 +99,8 @@ IMAGES_STORE = os.path.join(project_dir, "images")  # saving download picture to
 # HTTPCACHE_DIR = 'httpcache'
 # HTTPCACHE_IGNORE_HTTP_CODES = []
 # HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+
+MYSQL_HOST="127.0.0.1"
+MYSQL_DBNAME="pycrawler"
+MYSQL_USER="root"
+MYSQL_PASSWORD="23456"
