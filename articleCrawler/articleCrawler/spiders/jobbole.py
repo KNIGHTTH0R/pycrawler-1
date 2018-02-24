@@ -24,9 +24,9 @@ class JobboleSpider(scrapy.Spider):
             # 通过meta写入response传递参数到parse_detail
             yield Request(url= post_url, meta={"front_image_url":img_url}, callback=self.parse_detail)
         # next page  class="next page-numbers"
-        # next_page = response.css('.next.page-numbers::attr(href)').extract_first("")
-        # if next_page:
-        #     yield Request(url=parse.urljoin(response.url, next_page), callback=self.parse)
+        next_page = response.css('.next.page-numbers::attr(href)').extract_first("")
+        if next_page:
+            yield Request(url=parse.urljoin(response.url, next_page), callback=self.parse)
 
 
     def parse_detail(self, response):
@@ -35,6 +35,24 @@ class JobboleSpider(scrapy.Spider):
         :param response:
         :return:
         """
+
+        front_image_url = response.meta.get("front_image_url", "")  # 文章封面图(点进去之前的缩略图..)
+        item_loader = ArticleItemLoader(item=JobBoleArticleItem(), response=response)
+        item_loader.add_value("front_image_url", [front_image_url])
+        item_loader.add_xpath("title", '//div[@class="entry-header"]/h1/text()')
+        item_loader.add_value("url", response.url)
+        item_loader.add_value("url_object_id", get_md5(response.url))
+        item_loader.add_css("create_date", "p.entry-meta-hide-on-mobile::text")
+        item_loader.add_css("vote_up_nums", ".vote-post-up h10::text")
+        item_loader.add_css("comment_nums", "a[href='#article-comment'] span::text")
+        item_loader.add_css("fav_nums", ".bookmark-btn::text")
+        item_loader.add_css("tags", "p.entry-meta-hide-on-mobile a::text")
+        item_loader.add_css("content", "div.entry")
+
+        article_item = item_loader.load_item()
+
+        yield article_item # deliver this item to pipelines
+
         # # response.xpath('...')  return selector list
         # title = response.xpath('//div[@class="entry-header"]/h1/text()').extract_first("")
         # # title = response.css(".entry-header h1::text")[0].extract()
@@ -88,20 +106,4 @@ class JobboleSpider(scrapy.Spider):
         # article_item["tags"] = tag_list
         # article_item["content"] = content
 
-        front_image_url = response.meta.get("front_image_url", "")  # 文章封面图(点进去之前的缩略图..)
-        item_loader = ArticleItemLoader(item=JobBoleArticleItem(), response=response)
-        item_loader.add_value("front_image_url", [front_image_url])
-        item_loader.add_xpath("title", '//div[@class="entry-header"]/h1/text()')
-        item_loader.add_value("url", response.url)
-        item_loader.add_value("url_object_id", get_md5(response.url))
-        item_loader.add_css("create_date", "p.entry-meta-hide-on-mobile::text")
-        item_loader.add_css("vote_up_nums", ".vote-post-up h10::text")
-        item_loader.add_css("comment_nums", "a[href='#article-comment'] span::text")
-        item_loader.add_css("fav_nums", ".bookmark-btn::text")
-        item_loader.add_css("tags", "p.entry-meta-hide-on-mobile a::text")
-        item_loader.add_css("content", "div.entry")
-
-        article_item = item_loader.load_item()
-
-        yield article_item # deliver this item to pipelines
 

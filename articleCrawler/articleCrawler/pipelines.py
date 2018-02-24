@@ -67,13 +67,8 @@ class MysqlTwistedPipeline(object):
         return item
 
     def do_insert(self, cursor, item):
-        insert_sql = """
-                        insert into jobbole_article(title, url, url_object_id, create_date, fav_nums, tags)
-                        VALUES (%s, %s, %s, %s, %s, %s)
-                    """
-        cursor.execute(insert_sql,
-                       (item["title"], item["url"], item["url_object_id"], item["create_date"],
-                        item["fav_nums"], item["tags"]))
+        insert_sql, params = item.get_insert_sql()
+        cursor.execute(insert_sql, params)
 
     def handle_error(self, failure, item, spider):
         # 处理异步操作过程中发生的异常
