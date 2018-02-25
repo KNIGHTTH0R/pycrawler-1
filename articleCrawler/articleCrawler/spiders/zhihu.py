@@ -19,8 +19,8 @@ class ZhihuSpider(scrapy.Spider):
     # answers api (return answers json)
     start_answer_url = 'https://www.zhihu.com/api/v4/questions/{0}/answers?sort_by=default&include=data%5B%2A%5D.is_normal%2Cis_sticky%2Ccollapsed_by%2Csuggest_edit%2Ccomment_count%2Ccollapsed_counts%2Creviewing_comments_count%2Ccan_comment%2Ccontent%2Ceditable_content%2Cvoteup_count%2Creshipment_settings%2Ccomment_permission%2Cmark_infos%2Ccreated_time%2Cupdated_time%2Crelationship.is_author%2Cvoting%2Cis_thanked%2Cis_nothelp%2Cupvoted_followees%3Bdata%5B%2A%5D.author.is_blocking%2Cis_blocked%2Cis_followed%2Cvoteup_count%2Cmessage_thread_token%2Cbadge%5B%3F%28type%3Dbest_answerer%29%5D.topics&limit={1}&offset={2}'
 
-    crawled_topics = []  # 已爬取过的话题
-    crawled_questions = []  # 已爬取过的问题
+    crawled_topics = set()  # 已爬取过的话题
+    crawled_questions = set()  # 已爬取过的问题
     user_agent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.221 Safari/537.36 SE 2.X MetaSr 1.0"
     headers = {
         "HOST": "www.zhihu.com",
@@ -49,13 +49,13 @@ class ZhihuSpider(scrapy.Spider):
             if match_question:
                 question_url = match_question.group(1)
                 if question_url not in self.crawled_questions:
-                    self.crawled_questions.append(question_url)
+                    self.crawled_questions.add(question_url)
                     yield scrapy.Request(question_url, callback=self.parse_question, headers=self.headers)
             elif match_topic:
                 pass
                 topic_url = match_topic.group(1)
                 if topic_url not in self.crawled_topics:
-                    self.crawled_topics.append(topic_url)
+                    self.crawled_topics.add(topic_url)
                     yield scrapy.Request(topic_url, callback=self.parse, headers=self.headers)
             # yield scrapy.Request(url, callback=self.parse, headers=headers)  # 对所有url都进一步深入
 

@@ -76,6 +76,11 @@ IMAGES_URLS_FIELD = "front_image_url"  # a url list field
 project_dir = os.path.abspath(os.path.dirname(__file__))
 IMAGES_STORE = os.path.join(project_dir, "images")  # saving download picture to this directory
 
+import sys
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# 把 BASE_DIR/articleCrawler加入pythonpath中( import module时会从pythonpath中查找module )
+sys.path.insert(0, os.path.join(BASE_DIR, "articleCrawler"))  # 为使pythonpath在cmd中执行时生效
+
 # IMAGES_MIN_WIDTH = 100  filter images conditions
 # IMAGES_MIN_HEIGHT = 100
 
