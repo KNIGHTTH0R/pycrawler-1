@@ -585,22 +585,3 @@ def checkcapthca(headers, cn=True):
     print(z.json())
     return z.json()
 
-
-def login(username, password):
-    url = 'https://www.zhihu.com/api/v3/oauth/sign_in'
-    headers = getheaders()
-    data = getdata(username, password)
-    checkcapthca(headers)
-    # multipart_encoder = MultipartEncoder(fieles=data, boundary='----WebKitFormBoundarycGPN1xiTi2hCSKKZ')
-    # todo:boundary后面的几位数可以随机，现在是固定的
-    encoder = MultipartEncoder(data, boundary='----WebKitFormBoundarycGPN1xiTi2hCSKKZ')
-    headers['Content-Type'] = encoder.content_type
-    z2 = s.post(url, headers=headers, data=encoder.to_string(), )
-    print(z2.json())
-    print('123')
-
-
-if __name__ == '__main__':
-    username = ''
-    password = ''
-    login(username, password)

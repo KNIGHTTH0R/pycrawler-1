@@ -5,14 +5,9 @@ import json
 from urllib import parse
 from scrapy.loader import ItemLoader
 from articleCrawler.items import ZhihuAnswerItem, ZhihuQuestionItem
+# from articleCrawler.utils.zhihu_login_new import *
 import datetime
 
-user_agent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.221 Safari/537.36 SE 2.X MetaSr 1.0"
-headers = {
-    "HOST": "www.zhihu.com",
-    "Referer": "https://www.zhihu.com",
-    "User-Agent": user_agent
-}
 
 
 class ZhihuSpider(scrapy.Spider):
@@ -26,10 +21,18 @@ class ZhihuSpider(scrapy.Spider):
 
     crawled_topics = []  # 已爬取过的话题
     crawled_questions = []  # 已爬取过的问题
+    user_agent = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/49.0.2623.221 Safari/537.36 SE 2.X MetaSr 1.0"
+    headers = {
+        "HOST": "www.zhihu.com",
+        "Referer": "https://www.zhihu.com",
+        "User-Agent": user_agent
+    }
 
+    # override this method to add login logic before start crawling
+    # does not work for 2018 zhihu
     def start_requests(self):
         for url in self.topics:
-            yield scrapy.Request(url, dont_filter=True, headers=headers)
+            yield scrapy.Request(url, dont_filter=True, headers=self.headers)
 
     def parse(self, response):
         """
@@ -47,13 +50,13 @@ class ZhihuSpider(scrapy.Spider):
                 question_url = match_question.group(1)
                 if question_url not in self.crawled_questions:
                     self.crawled_questions.append(question_url)
-                    yield scrapy.Request(question_url, callback=self.parse_question, headers=headers)
+                    yield scrapy.Request(question_url, callback=self.parse_question, headers=self.headers)
             elif match_topic:
                 pass
                 topic_url = match_topic.group(1)
                 if topic_url not in self.crawled_topics:
                     self.crawled_topics.append(topic_url)
-                    yield scrapy.Request(topic_url, callback=self.parse, headers=headers)
+                    yield scrapy.Request(topic_url, callback=self.parse, headers=self.headers)
             # yield scrapy.Request(url, callback=self.parse, headers=headers)  # 对所有url都进一步深入
 
     def parse_question(self, response):
@@ -77,7 +80,7 @@ class ZhihuSpider(scrapy.Spider):
         question_item = item_loader.load_item()
 
         yield scrapy.Request(self.start_answer_url.format(question_id, 20, 0), callback=self.parse_answer,
-                             headers=headers)  # 未登录状态无法获取！通过api获取该问题下的答案
+                             headers=self.headers)  # 未登录状态无法获取！通过api获取该问题下的答案
         yield question_item
 
     def parse_answer(self, response):
@@ -101,37 +104,40 @@ class ZhihuSpider(scrapy.Spider):
             yield answer_item
 
         if not is_end:
-            yield scrapy.Request(next_url, callback=self.parse_answer, headers=headers)
+            yield scrapy.Request(next_url, callback=self.parse_answer, headers=self.headers)
 
-    # override this method to add login logic before start crawling
-    # does not work for 2018 zhihu
-    # def start_requests(self):
-    #     return [scrapy.Request('https://www.zhihu.com/#signin', callback=self.login, headers=headers)]
-    #
+
+
+
+    # 新版知乎让模拟登录变得异常麻烦，验证码更是使用了颠倒的汉字
     # def login(self, response):
-    #     response_text = response.text
-    #     match_obj = re.match('.*name="_xsrf" value="(.*?)"', response_text, re.DOTALL)  # re默认只对一行进行匹配
-    #     xsrf = ''
-    #     if match_obj:
-    #         xsrf = (match_obj.group(1))
-    #     if xsrf:
-    #         post_url = "https://www.zhihu.com/login/phone_num"
-    #         post_data = {
-    #             "_xsrf": xsrf,
-    #             "phone_num": "18782902568",
-    #             "password": "admin123"
-    #         }
+    #     signin_url = 'https://www.zhihu.com/api/v3/oauth/sign_in'
+    #     headers = getheaders()
+    #     data = getdata("username21312", "password")
+    #     checkcapthca(headers)
+    #     # multipart_encoder = MultipartEncoder(fieles=data, boundary='----WebKitFormBoundarycGPN1xiTi2hCSKKZ')
+    #     # todo:boundary后面的几位数可以随机，现在是固定的
+    #     encoder = MultipartEncoder(data, boundary='----WebKitFormBoundarycGPN1xiTi2hCSKKZ')
+    #     headers['Content-Type'] = encoder.content_type
+    #     print(encoder.to_string())
+    #     return [scrapy.FormRequest(
+    #         url=signin_url,
+    #         formdata=encoder.to_string(),
+    #         headers=headers,
+    #         callback=self.check_login
+    #     )]
+
+    #  通过 scrapy的 yield request方式
+    # 可以保证所有的request都在同一个session下，（sessionID的cookie相同）
+    # def apicture(self):
+    #     yield scrapy.Request(url="aaa picture", callback=self.btext)
     #
-    #         return [scrapy.FormRequest(
-    #             url=post_url,
-    #             formdata=post_data,
-    #             headers=headers,
-    #             callback=self.check_login
-    #         )]
+    # def btext(self):
+    #     yield scrapy.Request(url="bbb text", callback=self.crar)
     #
     # def check_login(self, response):
     #     #验证服务器的返回数据判断是否成功
     #     text_json = json.loads(response.text)
     #     if "msg" in text_json and text_json["msg"] == "登录成功":
-    #         for url in self.start_urls:
+    #         for url in self.topics:
     #             yield scrapy.Request(url, dont_filter=True, headers=self.headers)

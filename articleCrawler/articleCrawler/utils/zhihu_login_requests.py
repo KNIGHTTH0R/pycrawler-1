@@ -31,7 +31,22 @@ def get_xsrf():
         return match_obj.group(1)
     else:
         return ""
-
+def get_captcha():
+    import time
+    t = str(int(time.time()*1000))
+    captcha_url = "https://www.zhihu.com/captcha.gif?r={0}&type=login".format(t)
+    captcha = session.get(captcha_url, headers=headers)  # 一定要用session, 里面自带cookie
+    with open("captcha.jpg", "wb") as f:
+        f.write(captcha.content)
+    from PIL import Image
+    try:
+        im = Image.open("captcha.jpg")
+        im.show()
+        im.close()
+    except:
+        pass
+    captcha = input("please input captcha:")
+    return captcha
 
 def is_login():
     # 通过个人中心页面返回状态码来判断是否为登录状态
