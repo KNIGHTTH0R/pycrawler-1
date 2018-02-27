@@ -51,9 +51,10 @@ ROBOTSTXT_OBEY = False
 
 # Enable or disable downloader middlewares
 # See https://doc.scrapy.org/en/latest/topics/downloader-middleware.html
-# DOWNLOADER_MIDDLEWARES = {
-#    'articleCrawler.middlewares.ArticlecrawlerDownloaderMiddleware': 543,
-# }
+DOWNLOADER_MIDDLEWARES = {
+     'articleCrawler.middlewares.RandomUserAgentMiddleware': 543,
+     'scrapy.downloadermiddlewares.useragent.UserAgentMiddleware': None,  # disable default user agent middleware
+}
 
 # Enable or disable extensions
 # See https://doc.scrapy.org/en/latest/topics/extensions.html
@@ -80,6 +81,9 @@ import sys
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # 把 BASE_DIR/articleCrawler加入pythonpath中( import module时会从pythonpath中查找module )
 sys.path.insert(0, os.path.join(BASE_DIR, "articleCrawler"))  # 为使pythonpath在cmd中执行时生效
+
+# random user agent type: ie, firefox, chrome, ...
+RANDOM_UA_TYPE = "random"
 
 # IMAGES_MIN_WIDTH = 100  filter images conditions
 # IMAGES_MIN_HEIGHT = 100

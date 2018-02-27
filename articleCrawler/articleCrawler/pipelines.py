@@ -47,7 +47,8 @@ class MysqlTwistedPipeline(object):
     def __init__(self, dbpool):
         self.dbpool = dbpool
 
-    @classmethod  # another constructor   instance = clazz.from_settings
+    @classmethod  # a method that belongs to class
+    # overriding this method..
     def from_settings(cls, settings):
         params = dict(
             host=settings["MYSQL_HOST"],
