@@ -11,6 +11,7 @@ import datetime
 import re
 from articleCrawler.utils.common import extract_num
 from articleCrawler.settings import SQL_DATETIME_FORMAT, SQL_DATE_FORMAT
+from w3lib.html import remove_tags
 
 
 class ArticleItemLoader(ItemLoader):
@@ -152,19 +153,59 @@ class ZhihuAnswerItem(scrapy.Item):
         )
         return insert_sql, params
 
+class LagouJobItemLoader(ItemLoader):
+    default_output_processor = TakeFirst()
+
+def replace_splash(val):
+    return val.replace('/','')
+def handle_jobaddr(val):
+    addrlist = val.split('\n')
+    addrlist = [addr.strip() for addr in addrlist if addr != "查看地图"]
+    return ''.join(addrlist)
+
 class LagouJobItem(scrapy.Item):
     title = scrapy.Field()
     url = scrapy.Field()
+    url_object_id = scrapy.Field()
     salary = scrapy.Field()
-    job_city = scrapy.Field()
-    work_years = scrapy.Field()
-    degree_need = scrapy.Field()
+    job_city = scrapy.Field(
+        input_processor=MapCompose(replace_splash)
+    )
+    work_years = scrapy.Field(
+        input_processor=MapCompose(replace_splash),
+    )
+    degree_need = scrapy.Field(
+        input_processor=MapCompose(replace_splash),
+    )
     job_type = scrapy.Field()
     publish_time = scrapy.Field()
+    tags = scrapy.Field()
     job_advantage = scrapy.Field()
-    job_desc = scrapy.Field()
-    job_addr = scrapy.Field()
-    company_name = scrapy.Field()
+    job_desc = scrapy.Field(
+        input_processor=MapCompose(lambda x: x.strip()),
+    )
+    job_addr = scrapy.Field(
+        input_processor=MapCompose(remove_tags, handle_jobaddr)
+    )
+    company_name = scrapy.Field(
+        input_processor=MapCompose(lambda x: x.strip()),
+    )
     company_url = scrapy.Field()
     crawl_time = scrapy.Field()
     crawl_update_time = scrapy.Field()
+
+    def get_insert_sql(self):
+        insert_sql = """
+            insert into lagou_job(title, url, salary, job_city, work_years, degree_need,
+            job_type, publish_time, job_advantage, job_desc, job_addr, company_url, company_name, job_id)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) 
+            ON DUPLICATE KEY UPDATE salary=VALUES(salary), job_desc=VALUES(job_desc)
+        """
+
+        job_id = extract_num(self["url"])
+        params = (self["title"], self["url"], self["salary"], self["job_city"], self["work_years"], self["degree_need"],
+                  self["job_type"], self["publish_time"], self["job_advantage"], self["job_desc"], self["job_addr"], self["company_url"],
+                  self["company_name"], job_id)
+
+        return insert_sql, params
+
