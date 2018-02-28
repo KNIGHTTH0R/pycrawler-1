@@ -17,7 +17,7 @@ class LagouSpider(CrawlSpider):
         #Rule(LinkExtractor(allow=(r'gongsi/j\d+.html',)),  callback='parse_gongsi', follow=True),
         Rule(LinkExtractor(allow=r'jobs/\d+.html'), callback='parse_job', follow=False),
     )
-    # override Spider.custom_settings to define customized headers
+    # override Spider.custom_settings to define customized headers(settings.py)
     custom_settings = {
         "COOKIES_ENABLED": False,
         "DOWNLOAD_DELAY": 1,
