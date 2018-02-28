@@ -7,6 +7,35 @@
 
 from scrapy import signals
 from fake_useragent import UserAgent
+from articleCrawler.tools.crawl_xici_ip import GetIP
+
+# 动态ip代理middleware
+class RandomProxyMiddleware(object):
+    def __init__(self):
+        self.get_ip = GetIP()
+
+    def process_request(self, request, spider):
+        request.meta['proxy'] = self.get_ip.get_random_ip()
+
+
+class RandomUserAgentMiddleware(object):
+
+    def __init__(self, crawler):
+        super(RandomUserAgentMiddleware, self).__init__()  # 有必要吗？
+        self.ua = UserAgent()  # 国外网站维护的一大堆user-agent，加载速度比较慢
+        self.ua_type = crawler.settings.get('RANDOM_UA_TYPE', 'random')
+
+    @classmethod
+    def from_crawler(cls, crawler):
+        return cls(crawler)  # just like RandomUserAgentMiddleware(crawler)
+
+    def process_request(self, request, spider):
+        def get_ua():
+            return getattr(self.ua, self.ua_type)
+
+        request.headers.setdefault('User-Agent', get_ua())
+        # ip proxy
+        # request.meta['proxy'] = 'http://183.48.91.80:8118'
 
 
 class ArticlecrawlerSpiderMiddleware(object):
@@ -55,22 +84,3 @@ class ArticlecrawlerSpiderMiddleware(object):
 
     def spider_opened(self, spider):
         spider.logger.info('Spider opened: %s' % spider.name)
-
-
-class RandomUserAgentMiddleware(object):
-
-    def __init__(self, crawler):
-        super(RandomUserAgentMiddleware, self).__init__()  # 有必要吗？
-        self.ua = UserAgent()
-        self.ua_type = crawler.settings.get('RANDOM_UA_TYPE', 'random')
-
-    @classmethod
-    def from_crawler(cls, crawler):
-        return cls(crawler)  # just like RandomUserAgentMiddleware(crawler)
-
-    def process_request(self, request, spider):
-        def get_ua():
-            return getattr(self.ua, self.ua_type)
-        request.headers.setdefault('User-Agent', get_ua())
-
-
