@@ -3,8 +3,7 @@ from scrapy.selector import Selector
 import time
 
 
-browser = webdriver.Chrome(executable_path="D:/tools/drivers/chromedriver.exe")
-# browser.get('https://item.taobao.com/item.htm?spm=a219r.lm874.14.37.16ca690cd2NCvZ&id=563360028996&ns=1&abbucket=19')
+# browser = webdriver.Chrome(executable_path="D:/tools/drivers/chromedriver.exe")
 # print(browser.page_source)
 
 # # 自动登录知乎
@@ -22,14 +21,21 @@ browser = webdriver.Chrome(executable_path="D:/tools/drivers/chromedriver.exe")
 # browser.find_element_by_css_selector('div.info_list.login_btn a span').click()
 
 # 自动下拉滚动条
-browser.get('https://www.oschina.net/blog')
-for i in range(7):
-    time.sleep(1.2)
-    browser.execute_script('window.scrollTo(0,document.body.scrollHeight);')
+# browser.get('https://www.oschina.net/blog')
+# for i in range(7):
+#     time.sleep(1.2)
+#     browser.execute_script('window.scrollTo(0,document.body.scrollHeight);')
+
+# 设置chrome不加载图片
+chrome_opt = webdriver.ChromeOptions()
+prefs = {"profile.managed_default_content_settings.images": 2}
+chrome_opt.add_experimental_option('prefs', prefs)
+browser2 = webdriver.Chrome(executable_path="D:/tools/drivers/chromedriver.exe", chrome_options=chrome_opt)
+browser2.get('https://www.taobao.com/')
 
 # browser.find_element_by_css_selector()
 # browser selector 速度不如 scrapy.selector(written by c语言)
-# t_selector = Selector(text=browser.page_source)
+# t_selector = Selector(text=browser2.page_source)
 # title = t_selector.css('.tb-main-title::text').extract_first()
 # price = t_selector.css('#J_PromoPriceNum::text').extract_first()
 # print('title:{0}, ${1}'.format(title, price))
