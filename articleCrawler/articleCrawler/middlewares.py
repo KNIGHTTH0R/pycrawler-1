@@ -37,6 +37,17 @@ class RandomUserAgentMiddleware(object):
         # ip proxy
         # request.meta['proxy'] = 'http://183.48.91.80:8118'
 
+from scrapy.http import HtmlResponse
+class JSPageMiddleware(object):
+    # 通过selenium chrome请求动态页面
+
+    def process_request(self, request, spider):
+        if spider.name == "jobbole":  # and request.url == re.match......
+            spider.browser.get(request.url)
+            print("使用chrome访问:{0}".format(request.url))
+            resp = HtmlResponse(url=spider.browser.current_url, body=spider.browser.page_source, encoding='utf-8')
+            return resp
+
 
 class ArticlecrawlerSpiderMiddleware(object):
     # Not all methods need to be defined. If a method is not defined,

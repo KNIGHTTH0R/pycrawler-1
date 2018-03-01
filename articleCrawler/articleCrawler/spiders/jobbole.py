@@ -6,12 +6,24 @@ from scrapy import Request
 from articleCrawler.items import JobBoleArticleItem, ArticleItemLoader
 from articleCrawler.utils.common import get_md5
 import datetime
+from selenium import webdriver
+from scrapy.xlib.pydispatch import dispatcher
+from scrapy import signals
 
 
 class JobboleSpider(scrapy.Spider):
     name = 'jobbole'
     allowed_domains = ['blog.jobbole.com']
     start_urls = ['http://blog.jobbole.com/all-posts/']
+
+    def __init__(self):
+        self.browser = webdriver.Chrome('D:/tools/drivers/chromedriver.exe')
+        # scrapy信号量，doing specified things when receiving the specified signal (an event happening)
+        dispatcher.connect(self.spider_closed, signal=signals.spider_closed)
+
+    def spider_closed(self, spider):
+        print('spider---{0} closed!'.format(self.name))
+        self.browser.quit()
 
     def parse(self, response):
         post_nodes = response.css('#archive div.floated-thumb .post-thumb a')

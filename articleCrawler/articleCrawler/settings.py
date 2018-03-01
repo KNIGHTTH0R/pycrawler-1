@@ -71,7 +71,7 @@ import os
 ITEM_PIPELINES = {
     # 'articleCrawler.pipelines.JsonExporterPipeline': 300,  # the processing order, the smaller, the more prior
     # 'scrapy.pipelines.images.ImagesPipeline': 100,
-    # 'articleCrawler.pipelines.MySQLPipeline': 200,
+    # 'articleCrawler.pipelines.JSPageMiddleware': 50,
      'articleCrawler.pipelines.MysqlTwistedPipeline': 200
 }
 IMAGES_URLS_FIELD = "front_image_url"  # a url list field
