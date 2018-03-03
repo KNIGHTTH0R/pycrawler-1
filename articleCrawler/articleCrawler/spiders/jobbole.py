@@ -16,14 +16,26 @@ class JobboleSpider(scrapy.Spider):
     allowed_domains = ['blog.jobbole.com']
     start_urls = ['http://blog.jobbole.com/all-posts/']
 
-    def __init__(self):
-        self.browser = webdriver.Chrome('D:/tools/drivers/chromedriver.exe')
-        # scrapy信号量，doing specified things when receiving the specified signal (an event happening)
-        dispatcher.connect(self.spider_closed, signal=signals.spider_closed)
+    # def __init__(self):
+    #     self.browser = webdriver.Chrome('D:/tools/drivers/chromedriver.exe')
+    #     # scrapy信号量，doing specified things when receiving the specified signal (an event happening)
+    #     dispatcher.connect(self.spider_closed, signal=signals.spider_closed)
+    #
+    # def spider_closed(self, spider):
+    #     print('spider---{0} closed!'.format(self.name))
+    #     self.browser.quit()
 
-    def spider_closed(self, spider):
-        print('spider---{0} closed!'.format(self.name))
-        self.browser.quit()
+    # # scrapy数据收集器放在crawler,stats里面
+    # #收集伯乐在线所有404的url以及404页面数
+    # handle_httpstatus_list = [404]
+    #
+    # def __init__(self, **kwargs):
+    #     self.fail_urls = []
+    #     dispatcher.connect(self.handle_spider_closed, signals.spider_closed)
+    #
+    # def handle_spider_closed(self, spider, reason):
+    #     self.crawler.stats.set_value("failed_urls", ",".join(self.fail_urls))
+
 
     def parse(self, response):
         post_nodes = response.css('#archive div.floated-thumb .post-thumb a')
@@ -34,7 +46,7 @@ class JobboleSpider(scrapy.Spider):
             print("crawling url={}........".format(post_url))
             # 每次调用在此处返回一个Request对象，下次调用再返回下一个Request对象，像iterator一样的生成器函数
             # 通过meta写入response传递参数到parse_detail
-            yield Request(url= post_url, meta={"front_image_url":img_url}, callback=self.parse_detail)
+            yield Request(url=post_url, meta={"front_image_url":img_url}, callback=self.parse_detail)
         # next page  class="next page-numbers"
         next_page = response.css('.next.page-numbers::attr(href)').extract_first("")
         if next_page:
