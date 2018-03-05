@@ -18,6 +18,7 @@ class JobboleSpider(scrapy.Spider):
 
     # def __init__(self):
     #     self.browser = webdriver.Chrome('D:/tools/drivers/chromedriver.exe')
+	#	  super(JobboleSpider, self).__init__() # must be called or _rules stuff can't be initialized
     #     # scrapy信号量，doing specified things when receiving the specified signal (an event happening)
     #     dispatcher.connect(self.spider_closed, signal=signals.spider_closed)
     #
