@@ -89,6 +89,11 @@ class JsonWithEncodingPipeline(object):
     def spider_closed(self, spider):
         self.file.close()
 
+class ElasticsearchPipeline(object):
+
+    def process_item(self, item, spider):
+        item.save_to_es()
+        return item
 
 class JsonExporterPipeline(object):
     # 使用scrapy提供的json导出... 还有CsvItemExporter, XmlItemExporter....
