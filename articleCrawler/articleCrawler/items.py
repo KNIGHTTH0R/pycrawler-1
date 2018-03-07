@@ -12,6 +12,10 @@ import re
 from articleCrawler.utils.common import extract_num
 from articleCrawler.settings import SQL_DATETIME_FORMAT, SQL_DATE_FORMAT
 from w3lib.html import remove_tags
+import datetime
+from elasticsearch_dsl import DocType, Date, Nested, Boolean, \
+    analyzer, InnerDoc, Completion, Keyword, Text, Integer
+from articleCrawler.models.es_types import JobboleArticleType
 
 
 class ArticleItemLoader(ItemLoader):
@@ -36,34 +40,55 @@ def get_nums(value):
         nums = 0
     return nums
 
+def remove_comment_tags(value):
+    # 去掉tag中提取的评论
+    if "评论" in value:
+        return ""
+    else:
+        return value
 
 class JobBoleArticleItem(scrapy.Item):
+    title = scrapy.Field()
+    create_date = scrapy.Field(
+        input_processor=MapCompose(date_convert),
+    )
+    url = scrapy.Field()
+    url_object_id = scrapy.Field()
+    front_image_url = scrapy.Field(
+        output_processor=MapCompose(lambda i: i)
+    )
+    front_image_path = scrapy.Field()
+    vote_up_nums = scrapy.Field(
+        input_processor=MapCompose(get_nums)
+    )
+    comment_nums = scrapy.Field(
+        input_processor=MapCompose(get_nums)
+    )
+    fav_nums = scrapy.Field(
+        input_processor=MapCompose(get_nums)
+    )
+    tags = scrapy.Field(
+        input_processor=MapCompose(remove_comment_tags),
+        output_processor=Join(",")
+    )
+    content = scrapy.Field()
 
-    def __init__(self):
-        self.title = scrapy.Field()
-        self.create_date = scrapy.Field(
-            input_processor=MapCompose(date_convert)  # using date_convert function map the list items
-        )
-        self.url = scrapy.Field()
-        self.url_object_id = scrapy.Field()
-        self.front_image_url = scrapy.Field(
-            output_processor=MapCompose(lambda i: i)  # 覆盖默认的output_processor，因为本来就是需要list
-        )
-        self.front_image_path = scrapy.Field()
-        self.vote_up_nums = scrapy.Field(
-            input_processor=MapCompose(get_nums)  # MapCompose返回list, 因此default_output_processor=TakeFirst 而不是input
-        )
-        self.fav_nums = scrapy.Field(
-            input_processor=MapCompose(get_nums)
-        )
-        self.comment_nums = scrapy.Field(
-            input_processor=MapCompose(get_nums)
-        )
-        self.content = scrapy.Field()
-        self.tags = scrapy.Field(
-            input_processor=MapCompose(self.remove_comment_tags),
-            output_processor=Join(",")
-        )
+    def save_to_es(self):
+        article = JobboleArticleType()
+        article.title = self['title']
+        article.create_date = self['create_date']
+        article.content = remove_tags(self['content'])
+        if "front_image_path" in self:
+            article.front_image_url = self['front_image_url']
+            article.front_image_path = self['front_image_path']
+        article.vote_up_nums = self['vote_up_nums']
+        article.fav_nums = self['fav_nums']
+        article.comment_nums = self['comment_nums']
+        article.url = self['url']
+        article.tags = self['tags']
+        article.meta.id = self['url_object_id']
+
+        article.save()
 
     def get_insert_sql(self):
         insert_sql = """
@@ -75,12 +100,6 @@ class JobBoleArticleItem(scrapy.Item):
                   self["fav_nums"], self["tags"])
         return insert_sql, params
 
-    def remove_comment_tags(value):
-        # 去掉tag中提取的评论
-        if "评论" in value:
-            return ""
-        else:
-            return value
 
 
 class ZhihuQuestionItem(scrapy.Item):
@@ -153,15 +172,20 @@ class ZhihuAnswerItem(scrapy.Item):
         )
         return insert_sql, params
 
+
 class LagouJobItemLoader(ItemLoader):
     default_output_processor = TakeFirst()
 
+
 def replace_splash(val):
-    return val.replace('/','')
+    return val.replace('/', '')
+
+
 def handle_jobaddr(val):
     addrlist = val.split('\n')
     addrlist = [addr.strip() for addr in addrlist if addr != "查看地图"]
     return ''.join(addrlist)
+
 
 class LagouJobItem(scrapy.Item):
     title = scrapy.Field()
@@ -204,8 +228,8 @@ class LagouJobItem(scrapy.Item):
 
         job_id = extract_num(self["url"])
         params = (self["title"], self["url"], self["salary"], self["job_city"], self["work_years"], self["degree_need"],
-                  self["job_type"], self["publish_time"], self["job_advantage"], self["job_desc"], self["job_addr"], self["company_url"],
+                  self["job_type"], self["publish_time"], self["job_advantage"], self["job_desc"], self["job_addr"],
+                  self["company_url"],
                   self["company_name"], job_id)
 
         return insert_sql, params
-
