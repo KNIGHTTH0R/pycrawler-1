@@ -4,4 +4,4 @@ import os
 
 # set current path = project root directory
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-execute(["scrapy", "crawl", "lagou"])  # scrapy crawl zhihu
+execute(["scrapy", "crawl", "jobbole"])  # scrapy crawl zhihu
