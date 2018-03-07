@@ -4,11 +4,15 @@ __author__ = 'bobby'
 from datetime import datetime
 from elasticsearch_dsl import DocType, Date, Nested, Boolean, \
     analyzer, Completion, Keyword, Text, Integer
-
+from elasticsearch_dsl.analysis import CustomAnalyzer as _CustomAnalyzer
 from elasticsearch_dsl.connections import connections
+
 connections.create_connection(hosts=["localhost"])
 
 class JobboleArticleType(DocType):
+    # 搜索建议(关键词联想)
+    suggestion = Completion(analyzer=ik_analyzer)
+
     title = Text(analyzer="ik_max_word")  # analyze this text (分词..
     create_date = Date()
     url = Keyword()
@@ -25,7 +29,7 @@ class JobboleArticleType(DocType):
         index = "jobbole"  # just like database
         doc_type = "article"  # like table
 
+
 # 直接在elasticsearch上生成字段对应的mapping
 if __name__ == "__main__":
     JobboleArticleType.init()
-
