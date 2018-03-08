@@ -47,6 +47,26 @@ def remove_comment_tags(value):
     else:
         return value
 
+from elasticsearch_dsl.connections import connections
+# using xxxType to create a connection associated with this xxxType thing
+es = connections.create_connection(JobboleArticleType._doc_type.using)
+def gen_suggests(index, info_tuple):
+    # generate searching suggestions using corresponding info_tuple(text, weight)
+    used_word = set()
+    suggestions = []
+    for text, weight in info_tuple:
+        if text:
+            # 调用es的analyze接口分析字符串
+            words = es.indices.analyze(index=index, body=text, params={'analyzer':'ik_max_word', 'filter': ["lowercase"]} )
+            analyzed_words = set([ w['token'] for w in words['tokens'] if len(w['token']) > 1 ])
+            new_words = analyzed_words - used_word
+        else:
+            new_words = set()
+
+        suggestions.append({"input":list(new_words), "weight":weight})
+    return suggestions
+
+
 class JobBoleArticleItem(scrapy.Item):
     title = scrapy.Field()
     create_date = scrapy.Field(
@@ -73,6 +93,7 @@ class JobBoleArticleItem(scrapy.Item):
     )
     content = scrapy.Field()
 
+    # save item to elasticsearch engine
     def save_to_es(self):
         article = JobboleArticleType()
         article.title = self['title']
@@ -88,6 +109,8 @@ class JobBoleArticleItem(scrapy.Item):
         article.tags = self['tags']
         article.meta.id = self['url_object_id']
 
+        # 生成该文章的搜索建议
+        article.suggestion = gen_suggests(JobboleArticleType._doc_type.index, ((article.title,20),(article.tags,10)))
         article.save()
 
     def get_insert_sql(self):

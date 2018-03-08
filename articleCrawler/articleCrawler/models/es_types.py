@@ -9,6 +9,16 @@ from elasticsearch_dsl.connections import connections
 
 connections.create_connection(hosts=["localhost"])
 
+
+# 直接使用Completion(analyzer="ik_max_word")会报错
+class CustomAnalyzer(_CustomAnalyzer):
+    def get_analysis_definition(self):
+        return {}
+
+
+ik_analyzer = CustomAnalyzer("ik_max_word", filter=["lowercase"])
+
+
 class JobboleArticleType(DocType):
     # 搜索建议(关键词联想)
     suggestion = Completion(analyzer=ik_analyzer)
